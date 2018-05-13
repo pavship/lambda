@@ -25,6 +25,7 @@ exports.handler = (event, context, callback) => {
 		errMessage += ' Provided last day of period should be later than the first day.'
 	}
 	// 1.2. This function accepts only days before today. So check last day
+	// TODO function should cut off inappropriate days and run anyways
 	if (Date.now() <= last + 24 * 3600000 - 1) {
 		errMessage += ` Cannot run komzDayStatGen for dates later than yesterday. Invalid last date input > ${event.args.last}.`
 	}
