@@ -4,7 +4,6 @@
   "runtime": "nodejs8.10",
   "memory": 128,
   "timeout": 5,
-  /* "role": "arn:aws:iam::358235824881:role/utils_lambda_function", */
   "role": "arn:aws:iam::358235824881:role/lambdaWithDynamoDB_and_LambdaExec",
   "environment": {}
 }
