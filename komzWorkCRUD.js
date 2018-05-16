@@ -29,9 +29,12 @@ exports.handler = ({ command, args }, context, callback) => {
 
                 // 1.1. Find first and last affected dates to pass into komzDayStatGen Lambda
                 // const first = items[0].id.slice(0, 24)
-                const first = new Date(new Date(affStart).setHours(-tz,0,0,0))
+                const first = new Date(new Date(new Date(affStart).getTime()+tz*3600000).setHours(-tz,0,0,0))
+                // const first = new Date(new Date(affStart).setHours(-tz,0,0,0))
                 // const last = items.pop().id.slice(0, 24)
-                const last = new Date(new Date(affFin).setHours(-tz,0,0,0))
+                const last = new Date(new Date(new Date(affFin).getTime()+tz*3600000).setHours(-tz,0,0,0))
+                // const last = new Date(new Date(affFin).setHours(-tz,0,0,0))
+                console.log('first, last > ', first, last);
 
                 // 1.4. Invoke komzDayStatGen Lambda function
                 const payload = {args: { first, last, execId }}
