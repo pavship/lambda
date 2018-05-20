@@ -8,47 +8,47 @@
 
 // 0. Imports, utils
 const AWS = require('aws-sdk')
-const dynamo = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'})
+const dynamo = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-1' })
 const _ = require('lodash')
 
 // utility functions to handle dynamodb requests
 const isEmptyObj = (o) => Object.keys(o).length === 0 && o.constructor === Object
 const withHandler = async (dynamoReq) => {
-  const res = await dynamoReq.promise()
-  const { operation, params } = dynamoReq
-  // console.log('DB operation: ', operation)
-  // Define if request should return data
-  let dataExpected = true
-  switch (operation) {
-    case 'deleteItem':
-      if (!params.ReturnValues) dataExpected = false
-      break;
-  }
-  // throw error if request returned empty object
-  // for 'deleteItem' operation impossible to prove successful deletion if !params.ReturnValues (default)
-  if (isEmptyObj(res) && dataExpected) throw new Error(`DB ${operation} operation returned empty object. dbRequestParams: ${JSON.stringify(params, null, 2)}`)
-  // return data according to request operation type
-  let data
-  switch (operation) {
-    case 'getItem':
-      data = res.Item
-      break;
-    case 'query':
-      data = res.Items
-      break;
-    case 'deleteItem':
-      data = dataExpected ? res.Attributes : null
-      break;
-    default:
-      data = res
-  }
-  return data
+	const res = await dynamoReq.promise()
+	const { operation, params } = dynamoReq
+	// console.log('DB operation: ', operation)
+	// Define if request should return data
+	let dataExpected = true
+	switch (operation) {
+		case 'deleteItem':
+			if (!params.ReturnValues) dataExpected = false
+			break;
+	}
+	// throw error if request returned empty object
+	// for 'deleteItem' operation impossible to prove successful deletion if !params.ReturnValues (default)
+	if (isEmptyObj(res) && dataExpected) throw new Error(`DB ${operation} operation returned empty object. dbRequestParams: ${JSON.stringify(params, null, 2)}`)
+	// return data according to request operation type
+	let data
+	switch (operation) {
+		case 'getItem':
+			data = res.Item
+			break;
+		case 'query':
+			data = res.Items
+			break;
+		case 'deleteItem':
+			data = dataExpected ? res.Attributes : null
+			break;
+		default:
+			data = res
+	}
+	return data
 }
 // util to split array into chunks
 const toChunks = (arr, size) => {
 	let chunks = []
-	for (let i=0; i<arr.length; i+=size) {
-		chunks.push(arr.slice(i,i+size))
+	for (let i = 0; i < arr.length; i += size) {
+		chunks.push(arr.slice(i, i + size))
 	}
 	return chunks
 }
@@ -59,7 +59,7 @@ exports.handler = async (e, ctx, cb) => {
 		// timezone offset is needed for this function. Hard coded GMT+3 Moscow.
 		// TODO place tz into DB table with org settings
 		const tz = 3
-		const yesterday = new Date().setHours(-24-tz, 0, 0, 0)
+		const yesterday = new Date(Date.now() + tz * 3600000).setHours(-24 - tz, 0, 0, 0)
 		let first, last, execId, cleanMode, statItems
 		if (e.args) {
 			first = Date.parse(e.args.first)
@@ -94,7 +94,7 @@ exports.handler = async (e, ctx, cb) => {
 		}
 		// 1.4. Function will accept maximum 10 days or 5 days for cleanMode with multiple execs, because of lambda execution time limit (3sec)
 		const maxDays = (cleanMode && !execId) ? 5 : 10
-		if ( last - first > maxDays*24*3600000 ) {
+		if (last - first > maxDays * 24 * 3600000) {
 			throw new Error(`Time period between first to last days should be maximum 10 days or 5 days for cleanMode with multiple execs.`)
 		}
 		// VALIDATION PASSED
@@ -108,7 +108,6 @@ exports.handler = async (e, ctx, cb) => {
 		const dates_iso = dates.map(date => new Date(date).toISOString())
 		// log out stat dates to be evaluated
 		console.log(dates_iso)
-
 		// 3. Delete old records if in cleanMode
 		if (cleanMode) {
 			// 3.1. Get a list of ids to delete
@@ -125,7 +124,7 @@ exports.handler = async (e, ctx, cb) => {
 					KeyConditionExpression: "orgId = :orgId AND id BETWEEN :from AND :to",
 					ExpressionAttributeValues: {
 						":orgId": 1,
-						":from": new Date(first - 24*3600000).toISOString(),
+						":from": new Date(first).toISOString(),
 						// To make BETWEEN condition work as expected, add 1 millisecond from the right end,
 						// because EnremkolDayExecStatTable id attribute has format of <date>_<execId>
 						":to": new Date(last + 1).toISOString()
@@ -155,7 +154,7 @@ exports.handler = async (e, ctx, cb) => {
 		const dayWorks = await Promise.all(
 			dates.map(date => {
 				let queryParams = {
-					TableName: 'EnremkolWorkTable',
+					TableName: 'EnremkolWorkTable1',
 					KeyConditionExpression: "orgId = :orgId AND id BETWEEN :qf AND :to",
 					ExpressionAttributeValues: {
 						":orgId": 1,
@@ -172,7 +171,7 @@ exports.handler = async (e, ctx, cb) => {
 					queryParams = {
 						...queryParams,
 						FilterExpression: "#exec = :execId AND (attribute_not_exists(fin) OR fin > :from)",
-						ExpressionAttributeNames: {"#exec": "exec"},
+						ExpressionAttributeNames: { "#exec": "exec" },
 						ExpressionAttributeValues: {
 							...queryParams.ExpressionAttributeValues,
 							":execId": execId
@@ -223,23 +222,23 @@ exports.handler = async (e, ctx, cb) => {
 					execName,
 					time: aggregateTime(works),
 					workTypes: _(works).groupBy('workType').reduce(
-						function(workTypes, works, workType) {
+						function (workTypes, works, workType) {
 							workTypes.push({
 								workType,
 								time: aggregateTime(works),
 								workTypeClass: (workType === 'Прямые') ? 'main' :
-								(workType === 'Косвенные') ? 'aux' :
-								(workType === 'Побочные') ? 'aside' :
-								(workType === 'Отдых') ? 'rest' : 'negative',
+									(workType === 'Косвенные') ? 'aux' :
+										(workType === 'Побочные') ? 'aside' :
+											(workType === 'Отдых') ? 'rest' : 'negative',
 								workSubTypes: _(works).groupBy('workSubType').reduce(
-									function(workSubTypes, works, workSubType) {
+									function (workSubTypes, works, workSubType) {
 										// console.log(works);
 										// reject null subTypes
 										workSubType !== 'null' && workSubTypes.push({
 											workSubType,
 											time: aggregateTime(works),
 											models: _(works).groupBy('models[0].article').reduce(
-												function(models, works, article) {
+												function (models, works, article) {
 													// reject works with undefined models
 													// console.log(models, works, article);
 													if (article !== 'undefined') {
@@ -257,7 +256,7 @@ exports.handler = async (e, ctx, cb) => {
 																	time: time / length
 																}))
 															})).flatten().groupBy('id').reduce(
-																function(prods, value, id) {
+																function (prods, value, id) {
 																	// console.log(prods, value, id);
 																	prods.push({
 																		id,
@@ -305,7 +304,7 @@ exports.handler = async (e, ctx, cb) => {
 				}))
 			})
 		)
-		cb(null, {success: true})
+		cb(null, { success: true })
 	}
 	// handle all possible errors
 	catch (err) {

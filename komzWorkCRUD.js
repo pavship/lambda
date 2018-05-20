@@ -13,7 +13,7 @@ exports.handler = ({ command, args }, context, callback) => {
         case "edit":
             // basic DynamoDB request params
             const params = {
-              TableName: 'EnremkolWorkTable',
+              TableName: 'EnremkolWorkTable1',
               Key: {
                 orgId: 1,
                 id: args.id
@@ -108,7 +108,7 @@ exports.handler = ({ command, args }, context, callback) => {
                     }
                     // 3. Put altered item into DB
                     const putParams = {
-                        TableName: 'EnremkolWorkTable',
+                        TableName: 'EnremkolWorkTable1',
                         Item: item
                     }
                     documentClient.put(putParams, function(err, data) {
@@ -119,7 +119,7 @@ exports.handler = ({ command, args }, context, callback) => {
                             // console.log('> work successfully put into DB')
                             // 4. Get written item (dynamodb.put method isn't able to return new item)
                             const getParams = {
-                                TableName: 'EnremkolWorkTable',
+                                TableName: 'EnremkolWorkTable1',
                                 Key: {
                                     orgId: 1,
                                     id: id
