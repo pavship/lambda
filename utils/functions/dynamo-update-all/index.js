@@ -66,13 +66,6 @@ exports.handle = async function (e, ctx, cb) {
         const updatedItem = updatedItems[0]
         console.log('updatedItem > ', updatedItem)
 
-        // // 1. Scan for all ids
-        // const items = await withHandler(dynamo.scan({
-        //     TableName,
-        //     AttributesToGet: ['id'],
-        // }))
-        // console.log('items.length > ', items.length)
-
         // // manual input of the last updated item
         // const updatedItem = { id: '2018-05-08T11:01:50.312Z-40175b3255e3' }
 

@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk')
-const dynamo = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'})
+const dynamo = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-1' })
 const isEmptyObj = (o) => Object.keys(o).length === 0 && o.constructor === Object
 
 // utility function to handle dynamodb requests
@@ -35,18 +35,24 @@ const withHandler = async (dynamoReq) => {
   return data
 }
 
-exports.handle = async function(e, ctx, cb) {
+exports.handle = async function (e, ctx, cb) {
   console.log(`starting ${process.env.LAMBDA_FUNCTION_NAME} function with event: %j`, e)
   try {
+    const items = await withHandler(dynamo.scan({
+      TableName,
+      AttributesToGet: ['id'],
+      FilterExpression: 'attribute_type (workSubType, :v_sub)',
+      ExpressionAttributeValues: { ':v_sub': 'NULL' }
+    }))
     const getParams = {
-      TableName : 'EnremkolWorkTable',
+      TableName: 'EnremkolWorkTable',
       Key: {
         orgId: 1,
         id: '018-03-30T08:54:39.001Z-2fa10eac04df'
       }
     }
     const delParams = {
-      TableName : 'EnremkolWorkTable1',
+      TableName: 'EnremkolWorkTable1',
       Key: {
         orgId: 1,
         id: '2018-03-30T10:28:07.422Z-723967f4a753'
@@ -54,11 +60,11 @@ exports.handle = async function(e, ctx, cb) {
       ReturnValues: 'ALL_OLD'
     }
     let batchParams = {
-      RequestItems: { }
+      RequestItems: {}
     }
     const batchTable = 'EnremkolWorkTable1'
     batchParams.RequestItems[batchTable] = []
-    const ids = [ '018-03-30T10:28:07.422Z-723967f4a753',
+    const ids = ['018-03-30T10:28:07.422Z-723967f4a753',
       '2018-03-30T11:32:16.533Z-6d18af034004',
       '2018-03-30T11:33:50.083Z-abf7327e173a'
     ]
@@ -92,7 +98,7 @@ exports.handle = async function(e, ctx, cb) {
     cb(null, { hello: 'world', work })
     // cb(null, { hello: 'world' })
   }
-  catch(err) {
+  catch (err) {
     cb(err, null)
   }
 }
